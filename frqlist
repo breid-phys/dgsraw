@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# frqlist - Returns a list of frequencies in a decoded 16C file.
+#
+DATFILE=$1
+
+FRQLIST=$(grep -v '^$' $DATFILE | grep -v '#' | colrm 1 20 | colrm 8 999 | uniq )
+#
+echo $FRQLIST
+exit 0
+
+

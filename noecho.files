@@ -1,0 +1,8 @@
+noecho.files
+echo.gp
+echodet
+echodet.f
+echoplot.gp
+echos.gp
+brpd.f
+Makefile.echodet

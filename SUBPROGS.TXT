@@ -1,0 +1,297 @@
+==> dgs16c.f <==
+C
+      PROGRAM DGS16C
+C
+C     Digisonde 256 16 Channel data decoder
+C
+C     This program forms the basis of a decoder for 16 channel (16C) 
+C     data obtained from a UMass Lowell Digisonde 256 ionosonde.
+C
+C     Terence Bullett
+C     Air Force Research Laboratory
+C     15 September 2001
+C     linux g77
+C
+C     License:
+C     This is in the public domain.  
+C     This software was paid for by the Taxpayers of the
+C     United States of America.
+C     Thank one the next time you meet.
+C
+C     References:
+C        GL-TR-09-0190 "ARTIST Tape Output Formats"  July 1990  J. Tang, et al
+C
+C        "Decoding of Status Information in MMM Digisonde Ionograms"
+C                 I. Galkin  September 2001
+C
+
+==> ampv.f <==
+C
+C====+==================================================================+==
+C
+      REAL FUNCTION AMPV(EAMPS,MAXRBIN)
+C
+C     Calculate the Amplitude Most Pobable Value as a proxy for the
+C     noise floor of the Range-Doppler data in EAMPS
+C     Data are expected in the range of 0 to 120 dB and binned in 2dB bins.
+C     The resolution, range and number of bins is hard-coded.  Sorry.
+
+==> channel_map.f <==
+C
+C====+==================================================================+==
+C
+      SUBROUTINE CHANNEL_MAP(PREFACE, FRQ,APOL,HDOP,AZ,EL,NBEAM,NDOPP)
+C
+C     T. Bullett, AFRL, 18 January 2002
+C
+C     This subroutine performs the rather complex task of supplying the
+C     'meta-data' for the 16 channels of the 16 channel Digisonde 256 
+C     data.  The meta-data, or data about data, provide information on the
+C     context of these different channels.  For the Digisonde 256, the
+C     'channel number' can specify Polarization, Doppler and Arrival Angle.
+C     It is the precise values of these that this routine computes, based
+C     instrument settings.
+C     There are lots of caviats here, mostly falling in categoryies:
+C       A) That particular setting was not coded or debugged
+C       B) Your Digisonde may have different values in its PROMs or
+C          was installed differently.
+C     The numerical values of polarization are set to +-90.0 to be
+C     consistent with the 'chirality' factor of the Dynasonde
+C       -90.0  is Ordinary  ; +90.0 is eXtraordinary
+C        (J.W. Wright, private communication)
+C
+C     Output tables are indexed by the channel number(1-16) and contain:
+C       FRQ  - Sounding Frequency (MHz)
+C       APOL - Rx Antenna Polarization Mode O (-90.0 )or X (+90.0)
+C       HDOP - Doppler shift, Hz
+C       AZ   - Rx antenna beam azimuth, degrees
+C       EL   - Rx antenna beam elevation, degrees
+C       PZA  - The PZA or 'Meaning' byte defined by UMLCAR (cf Galkin 2001) 
+C
+
+==> dop_d256.f <==
+C      
+C  =======================================================================
+C
+      SUBROUTINE DOP_D256(PREFACE,   NDOPP,DFR)
+C
+C     Determines the number and spacing (Doppler Frequency Resolutuion) of
+C     the Ionogram Doppler bins.
+C     Some principles:
+C      - The maximum number of unique Doppler lines is 16 [-8..8]
+C      - There is never a zero Doppler in a D256.
+C      - The Doppler spectrum is always symmetric about zero
+
+==> fixphase.f <==
+C
+C====+==================================================================+==
+C
+      SUBROUTINE FIXPHASE(RGT,EPHASE,MAXRBIN)
+C
+C     The Digisondes all perform complex (In-phase and Quadrature)
+C     sampling of the receiver output by measuring the 225 kHz IF
+C     signal twice at time separation equal to 90 degrees of phase 
+C     in the IF.  This is 1.11111 us.
+C     A consequence of this is that if successive range gates are not
+C     spaced at integer multiples of the IF period (4.444444us) then
+C     there will be a phase difference induced by this sampling
+C     at the IF.  For dR=1.000 km, this is a 6.6667us dt, or 1.50
+C     IF cycles.  For dR=5.000 km, there are 7.500 IF cycles between
+C     successive range gates, thus every other range gate is 180 degree
+C     phase offset from its neighbors.
+C
+C     This routine corrects this, referencing all phases to the first
+C     range gate and removing the 360 degree miltiples.
+C
+
+==> frq_d256.f <==
+C
+C====+==================================================================+==
+C
+      REAL FUNCTION FRQ_D256(PREFACE)
+C
+C     Function retuns the actual radio frequency used for sounding,
+C     including the adjustments for frequency search, if enabled.
+C     NOTE: This does NOT exactly work for closely spaced frequency mode
+C     (aka Precision Group Height mode) 
+C
+
+==> indexx.f <==
+C
+C =============================================================================
+C
+C     Sort the array ARRIN, Length N, returning the order of the elements
+C     indexed in array INDX
+
+==> irtype.f <==
+C
+C   ======================================================================
+C
+	INTEGER FUNCTION IRTYPE(IBUF)
+C
+C	This function takes the Digisonde 256/DPS data block in IBUF and
+C	determines the actual data type (Ionogram, Ionogram continuation,
+C	Drift, Artist, Raw Ionogram) and returns it as the function value.
+C	If the data block is not one of these types (ie unknown) the 
+C	function returns a zero value for the recordtype.
+C
+C       NOTE: Due to a bug in the recording of 16 channel data in Artist3
+C         circa 2001, where the record type is not encoded into the 4 lowest
+C         bits of the first byte of every 8K block, this routine must be
+C         specific to 16 channel data and also VERY FRAGILE!
+C
+
+==> pref_16c.f <==
+C
+C =============================================================================
+C
+      SUBROUTINE PREF_16C(IBUF,  IPREF)
+C
+C     Extract the preface encoded into the LSB of the amplitude data in the
+C     16 channel data blocks.
+C     Preface characters 1-31 found in bytes    5-128 for both data types
+C     Preface characters 32-57 found in bytes 257-360 for IRTYPE=12
+C     Preface characters 32-64 found in bytes 129-232 for IRTYPE=???
+
+
+==> prf_d256.f <==
+C
+C  =======================================================================
+C
+      REAL FUNCTION PRF_D256(IR)
+C
+C     Determine the Pulse Repetition Frequency (PRF) of a D256
+C     from the R preface parameter
+
+==> pza2az.f <==
+C
+C====+==================================================================+==
+C
+      REAL FUNCTION PZA2AZ(PZA)
+C
+C     Compute the Azimuth Angle from the PZA byte.
+C
+C     Azimuth is in the low 4 bits of the 0PVZAAAA bits in PZA
+
+==> pza2pol.f <==
+C
+C====+==================================================================+==
+C
+      REAL FUNCTION PZA2POL(PZA)
+C
+C     Calculate the polarization based on the PZA byte
+C     The numerical values of polarization are set to +-90.0 to be
+C     consistent with the 'chirality' factor of the Dynasonde
+C        (J.W. Wright, private communication)
+C
+C     Polarizaion is in the 64's bit of the 0PVZAAAA bits in PZA
+      INTEGER PZA
+
+==> pza2zn.f <==
+C====+==================================================================+==
+C
+      REAL FUNCTION PZA2ZN(PZA)
+C
+C     Compute the Zenith Angle from the PZA byte.
+C
+C     Zenith is in the 16's and 32's bit of the 0PVZAAAA bits in PZA
+C
+
+==> read4kb.f <==
+C
+C  ========================================================================
+C
+      LOGICAL FUNCTION READ4KB(IU,  IBUF)
+C
+C     Subroutine to read 4096 bytes from opened file unit IU
+C     Returns the values in IBUF
+C     Return value is TRUE if there is some problem, such as EOF
+C     Specialized for Linux g77 compiler which does not easily support
+C       binary files
+
+==> rg_d256.f <==
+C
+C====+==================================================================+==
+C
+      SUBROUTINE RG_D256(PREFACE,  NRG, RGT)
+C
+C     Given the PREFACE, returns the number of range gates
+C     and their values
+C
+C     The range gates are determined by preface parameters H and E
+C     as defined in the Digisonde 256 "Green Book"
+
+==> s2pza.f <==
+C
+C====+==================================================================+==
+C
+      INTEGER FUNCTION S2PZA(PREFACE,ISTAT)
+C
+C     Convert Status to PZA byte using the ZT tables, Corrected for L
+C
+
+==> sort_spectra.f <==
+C
+C====+==================================================================+==
+C
+      SUBROUTINE SORT_SPECTRA(SORT1,SORT2,SORT3,SORT4,SORT5,NSRT, ISEQ)
+C
+C     This subroutine takes 5 tables of signal characteristics,
+C     typically Frequency, Polarization, Zenith, Azimuth and Doppler,
+C     and returns the sequence of channel numbers that sorts these
+C     keys in increasing order, from min to max value.
+C     NSRT is the number (1-4) of the SORT's to perform
+C     This is a simple formatting trick.
+C
+C     ***WARNING***  This code uses a simple multiplication trick to
+C     rank the values relative to each other.  This seems weak and
+C     prone to failure.
+C
+
+==> unpack_16c.f <==
+C
+C  =======================================================================
+C
+      LOGICAL FUNCTION UNPACK_16C(IBUF,   
+     +                    TIME,PREFACE,FREQ,EAMPS,EPHASE,RGT,MAXRBIN)
+C
+C     This subroutine takes a 4K block of 16 channel amplitude and phase
+C     Digisonde 256 data provides the following output.
+C        PREFACE - The decoded preface for this ionogram
+C        TIME - Time of the observation: YYYY DDD HH:MM:SS
+C        FREQ - The precise sounding frequency, in MHz.
+C               *NOTE* This will be slightly wrong for PGH modes, but it 
+C               is still the frequency in the preface.
+C        EAMPS(256,16) - Received amplitudes vs range gate and channel # ,
+C                        in dB and corrected for all D256 processor settings
+C                        but not for any antenna gains, cable losses, etc.
+C        EPHASE(256,16)- Received phase vs range and channel #, in degrees
+C        RGT(256) - Range Gate Table assigns a range in km to each range gate.
+C        MAXRBIN -  Maximum range bin number (128 or 256)
+C
+C     Interpetation of the channel number in terms of polarization, Doppler,
+C     and Rx antenna beam position (arrival angle) is left to another routine.
+
+
+==> ztl_init.f <==
+C
+C  ========================================================================
+C
+      SUBROUTINE ZTL_INIT()
+C
+C     Initialize the ZT table
+C     This routine sets the values for the ZT table used for
+C     determining Rx antenna beams, etc.  It is initialized this way
+C     to allow for a custom table to be loaded early in the main program,
+C     perhaps from a file.
+C
+C     The Meaning byte is defined as 0PVZAAAA where
+C        P = Polarization (0=Ordinary, 1=eXtraordinary)
+C        V = Vertical  (0=Not vertical, 1 = Vertical)
+C        Z = Zenith Angles (0 for small(11deg), 1 for Large (22deg))
+C        AAAA = Azimuth Value (0-12)
+C
+C     ToDo: Allow this to optionally read from an UMLCAR format ZT file.
+C
+C     Source: Green Book table 5.9, P.98, Revised 11Jun86,5Nov87,28Dec88
+C

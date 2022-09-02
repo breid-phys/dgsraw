@@ -1,0 +1,35 @@
+PROG =	dgs16c
+
+SRCS =	ampv.f  channel_map.f dgs16c.f dop_d256.f  fixphase.f pza2pol.f \
+	frq_d256.f indexx.f irtype.f pref_16c.f prf_d256.f pza2az.f pza2zn.f \
+	read4kb.f rg_d256.f s2pza.f sort_spectra.f unpack_16c.f ztl_init.f stats.f
+
+OBJS =	ampv.o channel_map.o dgs16c.o dop_d256.o  fixphase.o pza2pol.o \
+	frq_d256.o indexx.o irtype.o pref_16c.o prf_d256.o pza2az.o pza2zn.o \
+	read4kb.o rg_d256.o s2pza.o sort_spectra.o unpack_16c.o ztl_init.o stats.o
+
+LIBS =	
+
+CC = cc
+CFLAGS = -O
+#FC = g77
+FC=gfortran 
+#FFLAGS = -O2 -Wall -ffortran-bounds-check
+FFLAGS = -O2 -Wall -fbounds-check -fno-range-check 
+F90 = f90
+F90FLAGS = -O
+LDFLAGS = -s
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+clean:
+	rm -f $(PROG) $(OBJS) *.mod
+
+.SUFFIXES: $(SUFFIXES) .f90
+
+.f90.o:
+	$(F90) $(F90FLAGS) -c $<
+

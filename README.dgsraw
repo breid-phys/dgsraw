@@ -1,0 +1,14 @@
+README.dgsraw
+
+This collection of programs called dgsraw is a set of software tools to 
+read rad data formats from a Digisonde 256, including the DISS.
+
+There are also various scripts for gnuplot in the *.gp files that can
+plot the output of these fortran programs.
+
+
+These are ment to be user-adjustable.
+
+Enjoy,
+
+Terry Bullett
