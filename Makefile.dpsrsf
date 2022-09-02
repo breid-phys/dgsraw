@@ -4,23 +4,23 @@ SRCS =	dpsrsf.f unpack_dpsrsf.f prelude_rsf.f fixphase.f read4kb.f irtype.f \
 	rg_dps.f agc_dps.f frq_dps.f stats.f time_gpp.f unp_bcd2.f frq_d256.f \
         dop_dps.f az_dps.f pref_gpp.f astats.f unp_bcd4.f p_bcd2.f 
 
-OBJS =	dpsrsf.o unpack_dpsrsf.o prelude_rsf.o fixphase.o read4kb.o irtype.o \
-	rg_dps.o agc_dps.o frq_dps.o stats.o time_gpp.o unp_bcd2.o frq_d256.o \
-        dop_dps.o az_dps.o pref_gpp.o astats.o unp_bcd4.o p_bcd2.o 
+OBJDIR= ./obj
+SRCDIR= ./src
 
+SRCS := $(foreach src,$(SRCS),$(SRCDIR)/$(src))
+OBJS := $(SRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 
 LIBS =	
 
-CC = cc
-CFLAGS = -O
 FC = gfortran
 FFLAGS = -O2 -fbounds-check -fno-range-check
-F90 = f90
-F90FLAGS = -O
 LDFLAGS = -s
 
 all: $(PROG)
 
+$(OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.f
+	$(FC) $(FFLAGS) -c $< -o $@
+	
 $(PROG): $(OBJS)
 	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
@@ -29,6 +29,4 @@ clean:
 
 .SUFFIXES: $(SUFFIXES) .f90
 
-.f90.o:
-	$(F90) $(F90FLAGS) -c $<
 

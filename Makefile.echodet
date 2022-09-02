@@ -1,25 +1,26 @@
 PROG =	echodet
 
-SRCS =	echodet.f brpd.f channel_map.f dop_d256.f  fixphase.f pza2pol.f \
+SRCS =	ampv.f echodet.f brpd.f channel_map.f dop_d256.f  fixphase.f pza2pol.f \
 	frq_d256.f indexx.f irtype.f pref_16c.f prf_d256.f pza2az.f pza2zn.f \
 	read4kb.f rg_d256.f s2pza.f sort_spectra.f unpack_16c.f ztl_init.f
 
-OBJS =	echodet.o brpd.o ampv.o channel_map.o dop_d256.o fixphase.o pza2pol.o \
-	frq_d256.o indexx.o irtype.o pref_16c.o prf_d256.o pza2az.o pza2zn.o \
-	read4kb.o rg_d256.o s2pza.o sort_spectra.o unpack_16c.o ztl_init.o
+OBJDIR= ./obj
+SRCDIR= ./src
+
+SRCS := $(foreach src,$(SRCS),$(SRCDIR)/$(src))
+OBJS := $(SRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 
 LIBS =	
 
-CC = cc
-CFLAGS = -O
-FC = f77
-FFLAGS = -O2 -Wall -ff90  -ffortran-bounds-check 
-F90 = f90
-F90FLAGS = -O
+FC = gfortran
+FFLAGS = -O2 -fbounds-check -fno-range-check -ffree-line-length-none
 LDFLAGS = -s
 
 all: $(PROG)
 
+$(OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.f
+	$(FC) $(FFLAGS) -c $< -o $@
+	
 $(PROG): $(OBJS)
 	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
@@ -28,6 +29,4 @@ clean:
 
 .SUFFIXES: $(SUFFIXES) .f90
 
-.f90.o:
-	$(F90) $(F90FLAGS) -c $<
 

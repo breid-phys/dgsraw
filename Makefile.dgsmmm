@@ -5,25 +5,23 @@ SRCS =	dgsmmm.f ampv.f  channel_map.f dop_d256.f  fixphase.f pza2pol.f \
         pza2zn.f frq_d256.f pref_mmm.f read4kb.f rg_d256.f s2pza.f  \
         ztl_init.f stats.f frq_dps.f unp_bcd2.f 
 
-OBJS =	dgsmmm.o ampv.o channel_map.o dop_d256.o fixphase.o pza2pol.o \
-	unpack_mmm.o prelude_mmm.o indexx.o irtype.o prf_d256.o pza2az.o  \
-        pza2zn.o frq_d256.o pref_mmm.o read4kb.o rg_d256.o s2pza.o  \
-        ztl_init.o stats.o frq_dps.o unp_bcd2.o 
+OBJDIR= ./obj
+SRCDIR= ./src
+
+SRCS := $(foreach src,$(SRCS),$(SRCDIR)/$(src))
+OBJS := $(SRCS:$(SRCDIR)/%.f=$(OBJDIR)/%.o)
 
 LIBS =	
 
-CC = cc
-CFLAGS = -O 
-#FC = g77
-FC = gfortran 
-#FFLAGS = -O2 -Wall -ffortran-bounds-check
-FFLAGS = -O2  -fbounds-check -fno-range-check
-F90 = f90
-F90FLAGS = -O
+FC = gfortran
+FFLAGS = -O2 -fbounds-check -fno-range-check
 LDFLAGS = -s
 
 all: $(PROG)
 
+$(OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.f
+	$(FC) $(FFLAGS) -c $< -o $@
+	
 $(PROG): $(OBJS)
 	$(FC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
@@ -31,11 +29,6 @@ clean:
 	rm -f $(PROG) $(OBJS) *.mod
 
 .SUFFIXES: $(SUFFIXES) .f90
-
-.f90.o:
-	$(F90) $(F90FLAGS) -c $<
-
-
 
 
 

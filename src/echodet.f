@@ -116,7 +116,7 @@ C
         IF (CLP.EQ.'-h') THEN
           WRITE(*,*)' useage: echodet {-fpg} {-f #} {-t #} filename'
           WRITE(*,*)' '
-          WRITE(*,*)'	Decode 16 channel data from a Digisonde 256 16C file'
+          WRITE(*,*)'Decode data from a Digisonde 256 16C file'
           WRITE(*,*)' Filename must be provided on the command line.'
           WRITE(*,*)' Command line options:'
           WRITE(*,*)'  -f  <freq>  extract data for <frequency>'

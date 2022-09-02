@@ -49,14 +49,14 @@ C
          EOF = READ4KB(IU,  IBUFF)
          IF (EOF) CYCLE
 C        Make the low bits of the first byte = 0xc =1100
-         I=IOR(IAND(IBUFF(1),240), 12)
+         I=IOR(IAND(IBUFF(1),INT(240,1)), INT(12,1))
          IBUFF(1) = I
 C        Make the lowest bits of the next 3 words = 011
-         I=IOR(IAND(IBUFF(2),254), 0)
+         I=IOR(IAND(IBUFF(2),INT(254,1)), INT(0,1))
          IBUFF(2) = I
-         I=IOR(IAND(IBUFF(3),254), 1)
+         I=IOR(IAND(IBUFF(3),INT(254,1)), INT(1,1))
          IBUFF(3) = I
-         I=IOR(IAND(IBUFF(4),254), 1)
+         I=IOR(IAND(IBUFF(4),INT(254,1)), INT(1,1))
          IBUFF(4) = I
          ERROR = WRITE4KB(OU,IBUFF)
       ENDDO
